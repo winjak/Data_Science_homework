@@ -6,6 +6,7 @@ output:
     df_print: paged
 ---
 
+
 # Zadanie nr 1 (Economics)
 
 
@@ -15,11 +16,12 @@ output:
 #Wczytanie bibliotek
 library(tidyverse)
 library(ggplot2)
+library(lubridate)
 
 
 ```
 
-Wczytanie danych i dodanie nowych zmiennych Nowe zmienne
+Wczytanie danych i dodanie nowych zmiennych
 ```{r}
 
 dataset <- economics %>% 
@@ -53,28 +55,80 @@ head(dataset)
 
 ## Analiza danych
 
-
 ## Wykres nr 1
 
-```{r}
-# poziom bezrobocia
-ggplot(dataset, aes(date, unemp_rate) ) + geom_line()
+```{r, echo= FALSE  }
+dataset %>% 
+  pivot_longer(cols=-date,names_to = 'variable', values_to = 'values') %>% 
+  ggplot(aes(date, values))+ 
+  geom_line()+
+  facet_wrap(~variable,scales = "free_y", ncol=1)+ 
+  ggtitle("Zmiany ekonomiczne w USA na przestrzeni lat 1967-2015")+ xlab("Rok" )+
+  theme_minimal()
+
 ```
+
+**Wnioski:**
+
+* znaczący wzrost populacji USA na przestrzeni lat
+* rosną wydatki na konsumcję podczas gdy stopa oszczędności indywidualnych wydaje się maleć
+
+
+
+# Dynamika wzrostu populacji i konsumcji
+
+```{r, echo= FALSE  }
+
+dataset %>% mutate( pce_change=c(NA, diff(pce) ) ) %>% 
+  ggplot(aes(date, pce_change))+geom_line()+ 
+  theme_minimal()+
+  ggtitle('Dynamika wzrostu konsumcji')
+  
+
+# ) ) %>% pull(pc) filter( min(pce_change, na.rm = TRUE) )
+
+diff(dataset$pce) %>% which.min() %>%  dataset$date[.]  -> x
+
+
+```
+
+**Wnioski:**
+
+ * pod koniec 2008 roku zaobserwowaliśmy największy spadek wydatków na konsumpcję (miesiąc do miesiąca)
+ * mininum osiągnięto w `r x `
+
+
+
 
 ## Wykres nr 2
 
-```{r}
+```{r, echo= FALSE }
+# poziom bezrobocia
+ggplot(dataset, aes(date, unemp_rate) ) + geom_line()+
+  ggtitle("Stopa bezrobocia w USA w latach 1967 - 2015")+
+  theme_minimal()
+```
+
+**Wnioski:**
+ -widoczny wzrost stopy bezrobocia ze wględu na kryzys gospodarczy w latach 2007-2009
+ -wzrost bezrobocia jest zjawiskiem cyklicznym
+
+
+
+## Wykres nr 2
+
+```{r, echo= FALSE }
 
 ggplot(dataset, aes(date, pce)) + geom_line(size=1.5)+
   xlab("Date")+ylab(("mld USD"))+
-  ggtitle("wydatki na konsumpcję indywidualną (w mld USD) w USA w latach 1967 - 2015")+
+  ggtitle("Wydatki na konsumpcję indywidualną (w mld USD) w USA w latach 1967 - 2015")+
   theme_minimal()
 
 ```
 
 ## Wykres nr 3
 
-```{r}
+```{r, echo= FALSE }
 ggplot(dataset, aes(date, unemploy)) + geom_line(size=1.5)+
   xlab("Date")+ylab(("tys. osób"))+
   ggtitle("Liczba osób bezrobotnych (w tys.) w USA w latach 1967 - 2015")+
@@ -83,7 +137,7 @@ ggplot(dataset, aes(date, unemploy)) + geom_line(size=1.5)+
 
 ## Wykres nr 4
 
-```{r}
+```{r, echo= FALSE }
 ggplot(dataset, aes(date, uempmed)) + geom_line()+
   xlab("Date")+ylab(("liczba miesięcy"))+
   ggtitle("Mediana okresu bycia bezrobotnym (w miesiącach) w USA w latach 1967 - 2015")+
@@ -92,7 +146,7 @@ ggplot(dataset, aes(date, uempmed)) + geom_line()+
 
 ## Wykres nr 5
 
-```{r}
+```{r, echo= FALSE }
 
 ggplot(dataset, aes(pop, pce)) + geom_line()+
   xlab("Populacja (w tys.osób")+ylab(("Wydatki na konsumpcję"))+
@@ -100,18 +154,68 @@ ggplot(dataset, aes(pop, pce)) + geom_line()+
   theme_minimal()
 ```
 
+
+
+
 ## Wykres nr 6
 
-```{r}
+```{r, echo= FALSE }
 
 # lag, diff - wyznaczyć jakąś dynamikę?
 
 
 ggplot(dataset, aes(unemp_rate , psavert, size= pce_rate, color=uempmed) ) + 
   geom_point(alpha=0.5)+
-scale_size(range = c(0.3, 10), name="Population (M)") 
-
+  scale_size(range = c(0.3, 10), name="Population (M)") +  
+  ggtitle("Wydatki na konsumpcję w funckcji wielkości populacji w USA w latach 1967 - 2015")
 
 ```
 
 # Zadanie nr 2 (Movies)
+
+```{r, include=FALSE}
+library(ggplot2movies)
+```
+
+
+
+## Wczytanie danych i dodanie nowych zmiennych
+
+```{r}
+
+movies <- ggplot2movies::movies
+view(movies)
+
+```
+
+
+## Wykres 1
+```{r}
+library(RColorBrewer)
+# przygotowanie danych
+movies %>% select(Action:Romance) %>%  pivot_longer(cols =Action:Romance, names_to = 'gatunek') %>% group_by(gatunek) %>% 
+  summarise_all(sum) %>% ungroup() %>% arrange(desc(gatunek)) %>%   
+  mutate(prop = round( value/ sum(value)*100,  1),
+         lab.ypos = cumsum(prop) - 0.5*prop) -> temp
+# wykres
+ggplot(temp, aes("", prop, fill=gatunek)) +geom_bar(width = 1, stat = "identity", color = "white") +coord_polar("y", start = 0)+
+  geom_text(aes(y = lab.ypos, label = prop), color = "white")+
+  ggtitle("Udział poszczególnych gatunków w katalogu IMDB")+ 
+  scale_fill_viridis_d()+
+  theme_void()
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
