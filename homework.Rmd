@@ -17,6 +17,7 @@ output:
 library(tidyverse)
 library(ggplot2)
 library(lubridate)
+library(knitr)
 
 
 ```
@@ -74,10 +75,10 @@ dataset %>%
 * rosną wydatki na konsumcję podczas gdy stopa oszczędności indywidualnych wydaje się maleć
 
 
+## Wykres nr 2
 
-# Dynamika wzrostu populacji i konsumcji
 
-```{r, echo= FALSE  }
+```{r, echo= FALSE ,warning=FALSE}
 
 dataset %>% mutate( pce_change=c(NA, diff(pce) ) ) %>% 
   ggplot(aes(date, pce_change))+geom_line()+ 
@@ -100,7 +101,7 @@ diff(dataset$pce) %>% which.min() %>%  dataset$date[.]  -> x
 
 
 
-## Wykres nr 2
+## Wykres nr 3
 
 ```{r, echo= FALSE }
 # poziom bezrobocia
@@ -115,7 +116,7 @@ ggplot(dataset, aes(date, unemp_rate) ) + geom_line()+
 
 
 
-## Wykres nr 2
+## Wykres nr 4
 
 ```{r, echo= FALSE }
 
@@ -126,7 +127,7 @@ ggplot(dataset, aes(date, pce)) + geom_line(size=1.5)+
 
 ```
 
-## Wykres nr 3
+## Wykres nr 5
 
 ```{r, echo= FALSE }
 ggplot(dataset, aes(date, unemploy)) + geom_line(size=1.5)+
@@ -135,7 +136,7 @@ ggplot(dataset, aes(date, unemploy)) + geom_line(size=1.5)+
   theme_minimal()
 ```
 
-## Wykres nr 4
+## Wykres nr 6
 
 ```{r, echo= FALSE }
 ggplot(dataset, aes(date, uempmed)) + geom_line()+
@@ -144,7 +145,7 @@ ggplot(dataset, aes(date, uempmed)) + geom_line()+
   theme_minimal()
 ```
 
-## Wykres nr 5
+## Wykres nr 7
 
 ```{r, echo= FALSE }
 
@@ -157,7 +158,7 @@ ggplot(dataset, aes(pop, pce)) + geom_line()+
 
 
 
-## Wykres nr 6
+## Wykres nr 8
 
 ```{r, echo= FALSE }
 
@@ -175,22 +176,15 @@ ggplot(dataset, aes(unemp_rate , psavert, size= pce_rate, color=uempmed) ) +
 
 ```{r, include=FALSE}
 library(ggplot2movies)
-```
-
-
-
-## Wczytanie danych i dodanie nowych zmiennych
-
-```{r}
-
 movies <- ggplot2movies::movies
-view(movies)
-
 ```
 
 
-## Wykres 1
-```{r}
+
+
+ **Wykres 1**
+
+```{r, echo= FALSE }
 library(RColorBrewer)
 # przygotowanie danych
 movies %>% select(Action:Romance) %>%  pivot_longer(cols =Action:Romance, names_to = 'gatunek') %>% group_by(gatunek) %>% 
@@ -199,19 +193,99 @@ movies %>% select(Action:Romance) %>%  pivot_longer(cols =Action:Romance, names_
          lab.ypos = cumsum(prop) - 0.5*prop) -> temp
 # wykres
 ggplot(temp, aes("", prop, fill=gatunek)) +geom_bar(width = 1, stat = "identity", color = "white") +coord_polar("y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = prop), color = "white")+
-  ggtitle("Udział poszczególnych gatunków w katalogu IMDB")+ 
+  geom_text(aes(y = lab.ypos, label = prop))+
+  ggtitle("Udział poszczególnych gatunków w katalogu IMDB")+
   scale_fill_viridis_d()+
+ 
   theme_void()
+
 
 
 ```
 
+Wnioski: Najczęściej produkowane filmy to DRAMAT i KOMEDIA
+
+**Wykres 2**
+
+```{r, echo= FALSE }
+movies  %>%  
+  pivot_longer(cols = Action:Romance, names_to = 'gatunek') %>% 
+  filter(value !=0) %>% group_by(gatunek) %>%  summarise(round(mean(rating),2) ) %>% kable(col.names = c('Gatunek', 'Średnia ocena'))
+
+movies  %>%  
+  pivot_longer(cols = Action:Romance, names_to = 'gatunek') %>% 
+  filter(value !=0) %>% 
+  ggplot( aes(gatunek, rating , fill=gatunek) ) + geom_boxplot(color='darkgrey')+
+  ggtitle("Średnie oceny w zależności od gatunku")+
+  scale_fill_viridis_d()+
+  theme_minimal()
+```
+
+Wnioski: Najwyższą medianę ocen mają filmy dokumentalne. Z drugiej strony są najmniejszą grupą.
+Wysokie oceny mają również animacje, cechują się one także małą rozbieżnością ocen.
+
+
+**Wykres 3**
+
+```{r, echo= FALSE }
+#Liczba filmów w poszczególnych latach
+
+movies %>% group_by(year) %>% count() %>% ggplot(aes(year, n ))+  
+  geom_bar(stat = "identity")+
+  ggtitle("Liczba w filmów wyprodukowana w poszczególnych latach")+
+  theme_minimal()
+```
+
+
+**Wykres 4**
+
+```{r, echo= FALSE, warning=FALSE}
+
+#movies %>% mutate(n_gatunkow= Action+Animation+ Comedy+ Drama+ Documentary+ Romance ) %>% group_by(n_gatunkow) %>% count(n_gatunkow)
+# dla 15510 nie ma podanego gatunku (ponad 25% bazy)
+
+movies  %>%  
+  pivot_longer(cols = Action:Romance, names_to = 'gatunek') %>% 
+  filter(value !=0) %>% 
+  ggplot( aes(budget, rating, color = year ) ) +geom_point(alpha=0.6)+ facet_wrap(~gatunek)+
+  ggtitle("Zalżność oceny filmu w funckji budżetu filmu dla różnych gatunków filmów")
+
+
+```
+
+**Wykres 5**
+
+
+```{r, echo= FALSE}
+# movies %>% mutate(n_gatunkow= Action+Animation+ Comedy+ Drama+ Documentary+ Romance ) %>% group_by(n_gatunkow) %>% count(n_gatunkow)
+# dla 15510 nie ma podanego gatunku (ponad 25% bazy)
+
+movies  %>%  
+  pivot_longer(cols = Action:Romance, names_to = 'gatunek') %>% 
+  filter(value !=0) %>% 
+  ggplot( aes(votes, rating, color = year) ) + geom_point(alpha=0.6)+ facet_wrap(~gatunek)+
+  ggtitle("Ilość ocen vs. Wartość oceny dla różnych gatunków filmów")
 
 
 
+```
+
+Wnioski: Najczęściej oceniane filmy mają zazwyczaj wysokie oceny (powyżej 7.5)
 
 
+
+**Wykres 6**
+
+
+```{r, echo= FALSE}
+
+movies %>% group_by(year) %>% summarise(total_bud=mean(budget, na.rm = TRUE)) %>% filter( !is.na(total_bud) ) %>% 
+  ggplot(aes(year, total_bud))+geom_bar(stat = "identity") +
+  ggtitle("Średni budżet filmów w poszczególnych latach")+
+  theme_minimal()
+
+
+```
 
 
 
