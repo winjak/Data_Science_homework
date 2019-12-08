@@ -1,0 +1,117 @@
+---
+title: "Praca domowowa ggplot2"
+author: Jakub Winiczuk
+output:
+  html_document:
+    df_print: paged
+---
+
+# Zadanie nr 1 (Economics)
+
+
+
+```{r include=FALSE }
+
+#Wczytanie bibliotek
+library(tidyverse)
+library(ggplot2)
+
+
+```
+
+Wczytanie danych i dodanie nowych zmiennych Nowe zmienne
+```{r}
+
+dataset <- economics %>% 
+  mutate(unemp_rate = unemploy/pop*100, #stopa bezrobocia
+         pce_rate = pce*1000000/pop)  # wydatki na mieszkańca w [tys. USD]
+
+```
+
+
+
+**Struktura danych**
+
+Zmienne:
+ 
+* **DATE** – miesiąc (data) zebrania danych, 
+* **PCE** – wydatki na konsumpcję indywidualną (w mld USD),
+* **POP** – wielkość populacji (w tysiącach), 
+* **PSAVERT**- stopa oszczędności indywidualnych, 
+* **UEMPMED** – mediana okresu bycia bezrobotnym (w miesiącach), 
+* **UNEMPLOY** – liczba osób bezrobotnych (w tysiącach).
+
+Nowe dodatkowe zmienne:
+
+* **unemp_rate**  stopa bezrobocia
+* **pce_rate**  wydatki na konsumpcję indywidualną na 1 mieszkańca w [tys. USD]
+
+
+```{r, echo= FALSE  }
+head(dataset)
+```
+
+## Analiza danych
+
+
+## Wykres nr 1
+
+```{r}
+# poziom bezrobocia
+ggplot(dataset, aes(date, unemp_rate) ) + geom_line()
+```
+
+## Wykres nr 2
+
+```{r}
+
+ggplot(dataset, aes(date, pce)) + geom_line(size=1.5)+
+  xlab("Date")+ylab(("mld USD"))+
+  ggtitle("wydatki na konsumpcję indywidualną (w mld USD) w USA w latach 1967 - 2015")+
+  theme_minimal()
+
+```
+
+## Wykres nr 3
+
+```{r}
+ggplot(dataset, aes(date, unemploy)) + geom_line(size=1.5)+
+  xlab("Date")+ylab(("tys. osób"))+
+  ggtitle("Liczba osób bezrobotnych (w tys.) w USA w latach 1967 - 2015")+
+  theme_minimal()
+```
+
+## Wykres nr 4
+
+```{r}
+ggplot(dataset, aes(date, uempmed)) + geom_line()+
+  xlab("Date")+ylab(("liczba miesięcy"))+
+  ggtitle("Mediana okresu bycia bezrobotnym (w miesiącach) w USA w latach 1967 - 2015")+
+  theme_minimal()
+```
+
+## Wykres nr 5
+
+```{r}
+
+ggplot(dataset, aes(pop, pce)) + geom_line()+
+  xlab("Populacja (w tys.osób")+ylab(("Wydatki na konsumpcję"))+
+  ggtitle("Wydatki na konsumpcję w funckcji wielkości populacji w USA w latach 1967 - 2015")+
+  theme_minimal()
+```
+
+## Wykres nr 6
+
+```{r}
+
+# lag, diff - wyznaczyć jakąś dynamikę?
+
+
+ggplot(dataset, aes(unemp_rate , psavert, size= pce_rate, color=uempmed) ) + 
+  geom_point(alpha=0.5)+
+scale_size(range = c(0.3, 10), name="Population (M)") 
+
+
+```
+
+# Zadanie nr 2 (Movies)
